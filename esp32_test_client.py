@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 
-ESP32_URI = "ws://192.168.219.104:8080"
+ESP32_URI = "ws://192.168.219.106:8080"
 
 async def main():
     # 1. ESP32 서버에 연결
