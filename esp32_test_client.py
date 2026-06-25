@@ -4,17 +4,23 @@ import websockets
 ESP32_URI = "ws://192.168.219.106:8080"
 
 async def main():
-    # 1. ESP32 서버에 연결
     print(f"연결 시도: {ESP32_URI}")
     async with websockets.connect(ESP32_URI) as websocket:
-        print("연결 성공! 메시지를 보냅니다.")
+        print("연결 성공!")
 
-        # 2. 테스트 메시지 보내기
-        test_message = '{"base": 90, "elbow": 120}'
-        await websocket.send(test_message)
-        print(f"보낸 메시지: {test_message}")
-        await asyncio.sleep(1)
-        print("전송 완료.")
+        test_messages = [
+            '{"base": 0}',
+            '{"base": 90}',
+            '{"base": 180}',
+            '{"base": 45, "elbow": 120}',
+            '{"elbow": 120}',
+        ]
 
-# 비동기 함수 실행
+        for msg in test_messages:
+            await websocket.send(msg)
+            print(f"보낸 메세지 : {msg}")
+            await asyncio.sleep(2)
+
+        print("테스트 완료.")
+
 asyncio.run(main())

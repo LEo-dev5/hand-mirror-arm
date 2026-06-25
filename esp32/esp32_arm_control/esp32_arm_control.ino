@@ -12,6 +12,22 @@ WebsocketsClient client;
 bool hasClient = false;
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
+// 관절 이름 ↔ 채널 번호 목록
+struct Joint {
+  const char* key;
+  uint8_t channel;
+};
+
+Joint joints[] = {
+  {"base", 0},
+  {"shoulder", 1},
+  {"elbow", 2},
+  {"wrist_pitch", 3},
+  {"wrist_roll", 4},
+  {"gripper_l", 5},
+  {"gripper_r", 6}
+};
+
 // ── 서보 설정 (1-4에서 찾은 값) ──
 #define SERVOMIN 170
 #define SERVOMAX 520
@@ -23,28 +39,26 @@ void setServoAngle(uint8_t channel, int angle) {
   pwm.setPWM(channel, 0, pulse);
 }
 
-// ── 메시지 콜백: 여기가 새로 합쳐지는 핵심 ──
 void onMessage(WebsocketsMessage message) {
   String payload = message.data();
   Serial.print("받은 메시지: ");
   Serial.println(payload);
 
-  // JSON 파싱
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
-
-  // 방어 코드: 파싱 실패하면 무시 (깨진 JSON에도 안 죽음)
   if (error) {
     Serial.print("JSON 파싱 실패: ");
     Serial.println(error.c_str());
     return;
   }
 
-  // 값 꺼내서 서보 움직이기 (일단 base 하나만 테스트)
-  int base = doc["base"];
-  Serial.print("base 각도: ");
-  Serial.println(base);
-  setServoAngle(0, base);   // 채널 0 = base
+  // 7개 관절 중, JSON에 있는 것만 골라서 서보 구동
+  for (int i = 0; i < 7; i++) {
+    if (doc[joints[i].key].is<int>()) {
+      int angle = doc[joints[i].key];
+      setServoAngle(joints[i].channel, angle);
+    }
+  }
 }
 
 void setup() {
