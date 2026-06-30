@@ -7,8 +7,13 @@ import asyncio
 import websockets
 import json
 from wrist_tracker import get_wrist_servo_angles
+from collections import deque
 
 ESP32_URI = "ws://192.168.219.106:8080"
+
+# ── 이동 평균 필터 설정 ──
+WINDOW_SIZE = 5                          # 평균 낼 개수 (떨리면 키우고, 느리면 줄이기)
+base_history = deque(maxlen=WINDOW_SIZE)  # 최근 base 각도 보관함
 
 latest_result = None
 
@@ -45,12 +50,15 @@ async def main():
             timestamp_ms = int((time.time() - start_time) * 1000)
             detector.detect_async(mp_image, timestamp_ms)
 
-            # 손 인식 -> 각도계산 -> 전송
+            # 손 인식 -> 각도계산 -> 전송 | 이동 평균 값 전송으로 떨림 최소화
             if latest_result and latest_result.hand_landmarks:
                 hand_landmarks = latest_result.hand_landmarks[0]
-                angle_x, angle_y = get_wrist_servo_angles(hand_landmarks)            
-                message = json.dumps({"base": int(angle_x)})
+                angle_x, angle_y = get_wrist_servo_angles(hand_landmarks)
+                base_history.append(angle_x)
+                base_avg = sum(base_history) / len(base_history)
+                message = json.dumps({"base": int(base_avg)})
                 await websocket.send(message)
+
 
             # 화면 표시
             cv2.imshow("Realtime Control", frame)
