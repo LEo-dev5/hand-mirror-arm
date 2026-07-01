@@ -10,7 +10,6 @@ import time
 latest_result = None
 
 def save_result(result, output_image, timestamp_ms):
-    """콜백 함수: MediaPipe가 분석을 끝내면 자동으로 이 함수를 호출해요."""
     global latest_result
     latest_result = result
 
@@ -33,7 +32,6 @@ cap = cv2.VideoCapture(0)
 
 start_time = time.time()   # ← 이 줄 추가
 # ── 4. 21개 랜드마크 연결 정보 (손가락 뼈대 그리기용) ──────────
-# (시작점 인덱스, 끝점 인덱스) 쌍의 목록이에요.
 HAND_CONNECTIONS = [
     (0, 1), (1, 2), (2, 3), (3, 4),        # 엄지
     (0, 5), (5, 6), (6, 7), (7, 8),        # 검지
