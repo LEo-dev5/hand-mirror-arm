@@ -33,6 +33,17 @@ def calculate_angle(a, b, c):
 
     return angle_degree
 
+def map_range(value, in_min, in_max, out_min, out_max):
+    """
+    한 범위의 값을 다른 범위로 비례 변환한다. 결과는 out범위 안으로 클램핑된다.
+    """
+    result = (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    # ← 여기에 result를 클램핑하는 한 줄 추가
+    lower = min(out_min, out_max)   # 둘 중 작은 값
+    upper = max(out_min, out_max)   # 둘 중 큰 값
+    result = max(lower, min(upper, result))
+    return result
+
 
 # 테스트
 if __name__ == "__main__":
