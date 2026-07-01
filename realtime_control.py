@@ -9,12 +9,12 @@ import json
 from wrist_tracker import get_wrist_servo_angles
 from collections import deque
 
-ESP32_URI = "ws://192.168.219.106:8080"
+ESP32_URI = "ws://192.168.219.104:8080"
 
 # ── 이동 평균 필터 설정 ──
-WINDOW_SIZE = 5                          # 평균 낼 개수 (떨리면 키우고, 느리면 줄이기)
-base_history = deque(maxlen=WINDOW_SIZE)  # 최근 base 각도 보관함
-
+WINDOW_SIZE = 5     # 평균 용 개수
+base_history = deque(maxlen=WINDOW_SIZE)
+shoulder_history = deque(maxlen=WINDOW_SIZE)
 latest_result = None
 
 def save_result(result, output_image, timestamp_ms):
@@ -54,11 +54,21 @@ async def main():
             if latest_result and latest_result.hand_landmarks:
                 hand_landmarks = latest_result.hand_landmarks[0]
                 angle_x, angle_y = get_wrist_servo_angles(hand_landmarks)
+
+                # base (좌우, angle_x)
                 base_history.append(angle_x)
                 base_avg = sum(base_history) / len(base_history)
-                message = json.dumps({"base": int(base_avg)})
-                await websocket.send(message)
 
+                # shoulder (상하, angle_y)
+                shoulder_history.append(angle_y)
+                shoulder_avg = sum(shoulder_history) / len(shoulder_history)
+
+                # 둘 다 JSON에 담아 전송
+                message = json.dumps({
+                    "base": int(base_avg),
+                    "shoulder": int(shoulder_avg)
+                })
+                await websocket.send(message)
 
             # 화면 표시
             cv2.imshow("Realtime Control", frame)
